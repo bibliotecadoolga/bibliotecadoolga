@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca do Colégio</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+        nav { display: flex; justify-content: center; gap: 20px; background-color: #333; padding: 10px; }
+        nav a { color: white; text-decoration: none; padding: 10px; }
+        nav a:hover { background-color: #575757; }
+        .container { display: none; padding: 20px; }
+        .sessao { margin-bottom: 40px; }
+        .sessao h3 { margin-bottom: 15px; }
+        .livros { display: flex; flex-wrap: wrap; gap: 20px; }
+        .livro { border: 1px solid #ccc; border-radius: 10px; padding: 15px; width: 200px; text-align: center; background-color: white; }
+        .livro img { width: 100%; height: auto; border-radius: 5px; }
+        .btn-baixar { display: block; margin-top: 10px; padding: 10px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+        .btn-baixar:hover { background-color: #45a049; }
+        .login-container { display: flex; justify-content: center; padding: 50px; }
+        .login-form { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 300px; }
+        .login-form input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .login-form button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; }
+        .login-form button:hover { background-color: #45a049; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        .tabs { display: flex; gap: 20px; margin-bottom: 20px; }
+        .tabs button { padding: 10px; border: none; background-color: #4CAF50; color: white; border-radius: 5px; }
+        .tabs button.active { background-color: #45a049; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Biblioteca do Colégio</h1>
+</header>
+
+<section id="login" class="login-container">
+    <form class="login-form" onsubmit="return loginUser(event)">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Usuário" required>
+        <input type="password" id="password" placeholder="Senha" required>
+        <button type="submit">Entrar</button>
+    </form>
+</section>
+
+<section id="biblioteca" class="container">
+    <nav id="biblioteca-nav">
+        <a href="#" onclick="mostrarSessoes()">Início</a>
+        <span id="sessao-links"></span>
+        <a href="#" onclick="logout()">Sair</a>
+    </nav>
+    <h2>Biblioteca do Aluno</h2>
+    <div id="sessoes-container"></div>
+</section>
+
+<section id="admin-panel" class="container">
+    <nav>
+        <a href="#">Painel de Administração</a>
+        <a href="#" onclick="logout()">Sair</a>
+    </nav>
+    <div class="tabs">
+        <button onclick="showTab('alunos')" class="active">Cadastro de Alunos</button>
+        <button onclick="showTab('sessoes')">Sessões</button>
+        <button onclick="showTab('livros')">Livros</button>
+    </div>
+    <div id="alunos" class="tab active">
+        <h3>Cadastrar Novo Aluno</h3>
+        <input type="text" id="nome-aluno" placeholder="Nome Completo">
+        <input type="text" id="matricula-aluno" placeholder="Matrícula">
+        <input type="number" id="idade-aluno" placeholder="Idade">
+        <input type="text" id="turma-aluno" placeholder="Turma">
+        <input type="text" id="turno-aluno" placeholder="Turno">
+        <input type="text" id="novo-usuario" placeholder="Usuário">
+        <input type="password" id="nova-senha" placeholder="Senha">
+        <button onclick="cadastrarAluno()">Cadastrar</button>
+    </div>
+    <div id="sessoes" class="tab">
+        <h3>Criar Nova Sessão</h3>
+        <input type="text" id="nova-sessao" placeholder="Nome da Sessão">
+        <button onclick="criarSessao()">Criar Sessão</button>
+    </div>
+    <div id="livros" class="tab">
+        <h3>Adicionar Livro</h3>
+        <input type="text" id="livro-sessao" placeholder="Sessão">
+        <input type="text" id="livro-nome" placeholder="Nome do Livro">
+        <input type="file" id="livro-imagem" accept="image/jpeg">
+        <input type="file" id="livro-pdf" accept="application/pdf">
+        <button onclick="adicionarLivro()">Adicionar Livro</button>
+    </div>
+</section>
+
+<script>
+    let alunos = [{ usuario: 'aluno', senha: '1234', nome: 'Aluno Teste', matricula: '0001', idade: 16, turma: 'A', turno: 'Manhã' }];
+    let sessoes = [];
+
+    function loginUser(event) {
+        event.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (username === 'admin' && password === 'admin123') {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            atualizarNavSessoes();
+        } else if (alunos.some(a => a.usuario === username && a.senha === password)) {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('biblioteca').style.display = 'block';
+            mostrarSessoes();
+        } else {
+            alert('Credenciais inválidas.');
+        }
+    }
+
+    function logout() {
+        document.getElementById('biblioteca').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('login').style.display = 'flex';
+    }
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    function cadastrarAluno() {
+        const aluno = {
+            nome: document.getElementById('nome-aluno').value,
+            matricula: document.getElementById('matricula-aluno').value,
+            idade: document.getElementById('idade-aluno').value,
+            turma: document.getElementById('turma-aluno').value,
+            turno: document.getElementById('turno-aluno').value,
+            usuario: document.getElementById('novo-usuario').value,
+            senha: document.getElementById('nova-senha').value
+        };
+        if (Object.values(aluno).every(v => v)) {
+            alunos.push(aluno);
+            alert('Aluno cadastrado com sucesso!');
+            document.querySelectorAll('#alunos input').forEach(input => input.value = '');
+        } else {
+            alert('Preencha todos os campos.');
+        }
+    }
+
+    function criarSessao() {
+        const nomeSessao = document.getElementById('nova-sessao').value;
+        if (nomeSessao) {
+            sessoes.push({ nome: nomeSessao, livros: [] });
+            alert('Sessão criada com sucesso!');
+            document.getElementById('nova-sessao').value = '';
+            atualizarNavSessoes();
+            mostrarSessoes();
+        } else {
+            alert('Informe o nome da sessão.');
+        }
+    }
+
+    function atualizarNavSessoes() {
+        const linksContainer = document.getElementById('sessao-links');
+        linksContainer.innerHTML = '';
+        sessoes.forEach(sessao => {
+            const link = document.createElement('a');
+            link.href = "#";
+            link.textContent = sessao.nome;
+            link.onclick = () => mostrarSessaoEspecifica(sessao.nome);
+            linksContainer.appendChild(link);
+        });
+    }
+
+    function adicionarLivro() {
+        const sessaoNome = document.getElementById('livro-sessao').value;
+        const livroNome = document.getElementById('livro-nome').value;
+        const imagemFile = document.getElementById('livro-imagem').files[0];
+        const pdfFile = document.getElementById('livro-pdf').files[0];
+
+        if (sessaoNome && livroNome && imagemFile && pdfFile) {
+            const readerImg = new FileReader();
+            const readerPdf = new FileReader();
+
+            readerImg.onload = function(e) {
+                const imagemURL = e.target.result;
+                readerPdf.onload = function(e2) {
+                    const pdfURL = e2.target.result;
+                    const sessao = sessoes.find(s => s.nome === sessaoNome);
+                    if (sessao) {
+                        sessao.livros.push({ nome: livroNome, imagem: imagemURL, pdf: pdfURL });
+                        alert('Livro adicionado com sucesso!');
+                        mostrarSessoes();
+                    } else {
+                        alert('Sessão não encontrada.');
+                    }
+                };
+                readerPdf.readAsDataURL(pdfFile);
+            };
+            readerImg.readAsDataURL(imagemFile);
+        } else {
+            alert('Preencha todos os campos e selecione arquivos.');
+        }
+    }
+
+    function mostrarSessoes() {
+        const container = document.getElementById('sessoes-container');
+        container.innerHTML = '';
+        sessoes.forEach(sessao => {
+            const sessaoDiv = document.createElement('div');
+            sessaoDiv.classList.add('sessao');
+            sessaoDiv.innerHTML = `<h3>${sessao.nome}</h3>`;
+
+            const livrosDiv = document.createElement('div');
+            livrosDiv.classList.add('livros');
+            sessao.livros.forEach(livro => {
+                livrosDiv.innerHTML += `
+                    <div class="livro">
+                        <img src="${livro.imagem}" alt="${livro.nome}">
+                        <h4>${livro.nome}</h4>
+                        <a class="btn-baixar" href="${livro.pdf}" download>Baixar em PDF</a>
+                    </div>
+                `;
+            });
+            sessaoDiv.appendChild(livrosDiv);
+            container.appendChild(sessaoDiv);
+        });
+    }
+
+    function mostrarSessaoEspecifica(nomeSessao) {
+        const container = document.getElementById('sessoes-container');
+        container.innerHTML = '';
+        const sessao = sessoes.find(s => s.nome === nomeSessao);
+        if (sessao) {
+            const sessaoDiv = document.createElement('div');
+            sessaoDiv.classList.add('sessao');
+            sessaoDiv.innerHTML = `<h3>${sessao.nome}</h3>`;
+            const livrosDiv = document.createElement('div');
+            livrosDiv.classList.add('livros');
+            sessao.livros.forEach(livro => {
+                livrosDiv.innerHTML += `
+                    <div class="livro">
+                        <img src="${livro.imagem}" alt="${livro.nome}">
+                        <h4>${livro.nome}</h4>
+                        <a class="btn-baixar" href="${livro.pdf}" download>Baixar em PDF</a>
+                    </div>
+                `;
+            });
+            sessaoDiv.appendChild(livrosDiv);
+            container.appendChild(sessaoDiv);
+        }
+    }
+</script>
+
+</body>
+</html>
